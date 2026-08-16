@@ -20,4 +20,8 @@ I believe that in His love, God gives me an army of help. This help comes in the
 
 When I or another does not shine in a way visible to others, then we are not with God. For God is light, and in Him there is no darkness at all. To be aligned with God is to reflect His light. When our path to Him is obstructed, then we are in shadow and neither see nor reflect His true light.
 
-I believe that creation is the unique domain of God, but that as His creation we can shape and change it. We can either focus or distort His light and that, in proportion to the alignment of our will to His, our remixing of His creation will be either good or evil.
+I believe that creation is the unique domain of God, but that as a part of His creation we can shape and change it. We can either focus or distort His light and that, in proportion to the alignment of our will to His, our remixing of His creation will be either good or evil.
+
+I believe that mankind is God's most cherished and beloved creation, as we are made in His very image. I believe that Mary, is the highest of all created people, which in turn makes her the very pinnacle of all God's creation. She is perfect in every way. Made perfect - as only a perfect creation could be spouse and mother of God.
+
+She is perfect in her creation and perfect in her alignment with the will of God. There is perfection in her reflection of His light. In mystery, she is simultaneously infinitely above me whilst remaining infinitely below God.
