@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-# Print today's Mass reading citations (Universalis, Australian lectionary).
-# Output: plain text, one line per reading.
-
 set -euo pipefail
 
-curl -fsSL "https://universalis.com/Australia/jsonpmass.js" \
+curl -fsSL "https://universalis.com/Australia/$(date +%Y%m%d)/jsonpmass.js" \
     | sed -E 's/^universalisCallback\((.*)\);[[:space:]]*$/\1/' \
     | jq -r '
-        # Decode the HTML entities Universalis uses.
         def entities:
             gsub("&#160;|&#xa0;|&nbsp;"; " ")
             | gsub("&#x2010;"; "-")
@@ -19,7 +15,6 @@ curl -fsSL "https://universalis.com/Australia/jsonpmass.js" \
             | gsub("&#xa9;"; "\u00a9")
             | gsub("&amp;"; "&");
 
-        # Strip HTML tags and trim whitespace.
         def plain: (. // "") | gsub("<[^>]*>"; "") | entities | gsub("^\\s+|\\s+$"; "");
 
         "\(.date | plain) — \(.day | plain)",
