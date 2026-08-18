@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generate today's Mass readings as an audio mp3 via the ElevenLabs API.
 #
-#   ./tts_daily_reading.sh                 # fetch today's readings -> audio/YYYY-MM-DD.mp3
+#   ./tts_daily_reading.sh                 # fetch today's readings -> audio/YYYY-MM-DD-<voice>.mp3
 #   ./tts_daily_reading.sh --force         # regenerate even if today's file exists
 #   ./tts_daily_reading.sh --print-text    # show the text that would be spoken (no API call)
 #   ./tts_daily_reading.sh --list-voices   # list voices on your account
@@ -49,6 +49,7 @@ load_env
 
 ELEVENLABS_API_KEY="${ELEVENLABS_API_KEY:-}"
 ELEVENLABS_VOICE="${ELEVENLABS_VOICE:-rachel}"
+ELEVENLABS_VOICE_NAME="${ELEVENLABS_VOICE_NAME:-}"   # display name for the filename
 ELEVENLABS_MODEL_ID="${ELEVENLABS_MODEL_ID:-eleven_flash_v2_5}"
 ELEVENLABS_OUTPUT_FORMAT="${ELEVENLABS_OUTPUT_FORMAT:-mp3_44100_64}"
 ELEVENLABS_STABILITY="${ELEVENLABS_STABILITY:-0.5}"
@@ -64,7 +65,7 @@ while [[ $# -gt 0 ]]; do
         --force|-f)      FORCE=1 ;;
         --print-text)    ACTION=print-text ;;
         --list-voices)   ACTION=list-voices ;;
-        --voice)         [[ $# -ge 2 ]] || die "--voice needs a value"; ELEVENLABS_VOICE="$2"; shift ;;
+        --voice)         [[ $# -ge 2 ]] || die "--voice needs a value"; ELEVENLABS_VOICE="$2"; ELEVENLABS_VOICE_NAME=""; shift ;;
         --model)         [[ $# -ge 2 ]] || die "--model needs a value"; ELEVENLABS_MODEL_ID="$2"; shift ;;
         --help|-h)       usage ;;
         *)               die "unknown option: $1 (try --help)" ;;
@@ -80,24 +81,37 @@ require_key() { [[ -n "$ELEVENLABS_API_KEY" ]] || die "no API key configured. Ru
 
 # --- Voice resolution --------------------------------------------------------
 
-# Accept a voice ID as-is; otherwise resolve a name via the API.
+fetch_voices() {
+    curl -fsS "$API_BASE/v1/voices" -H "xi-api-key: $ELEVENLABS_API_KEY" 2>/dev/null \
+        || die "could not reach ElevenLabs or bad API key"
+}
+
+# Accept a voice name or ID; sets VOICE_ID and VOICE_NAME. The name is
+# looked up when the config only has an ID (so files can be named after
+# the voice) or when a name was given.
 resolve_voice() {
-    local v="$1" voices
+    local v="$1" match
     if [[ "$v" =~ ^[A-Za-z0-9_-]{16,}$ ]]; then
-        printf '%s' "$v"
+        VOICE_ID="$v"
+        VOICE_NAME="$ELEVENLABS_VOICE_NAME"
+        if [[ -z "$VOICE_NAME" ]]; then
+            VOICE_NAME="$(fetch_voices \
+                | jq -r --arg id "$v" '.voices[] | select(.voice_id == $id) | .name')"
+            [[ -n "$VOICE_NAME" ]] || VOICE_NAME="$v"
+        fi
         return 0
     fi
-    voices="$(curl -fsS "$API_BASE/v1/voices" -H "xi-api-key: $ELEVENLABS_API_KEY" 2>/dev/null)" \
-        || die "could not reach ElevenLabs or bad API key"
-    printf '%s' "$voices" \
+    match="$(fetch_voices \
         | jq -er --arg name "${v,,}" \
-              '.voices[] | select((.name | ascii_downcase) == $name) | .voice_id' \
+              '.voices[] | select((.name | ascii_downcase) == $name) | "\(.voice_id)\t\(.name)"')" \
         || die "voice '$v' not found — run ./tts_daily_reading.sh --list-voices"
+    VOICE_ID="${match%%$'\t'*}"
+    VOICE_NAME="${match#*$'\t'}"
 }
 
 list_voices() {
     require_key
-    curl -fsS "$API_BASE/v1/voices" -H "xi-api-key: $ELEVENLABS_API_KEY" \
+    fetch_voices \
         | jq -r '.voices[]
             | "\(.voice_id)  \(.name)  "
               + (if .labels.accent then "[\(.labels.accent)] " else "" end)
@@ -203,17 +217,25 @@ TEXT="$(prepare_text)"
 
 DATE="$(date +%F)"
 mkdir -p "$AUDIO_DIR"
-OUT_FILE="$AUDIO_DIR/$DATE.mp3"
+
+VOICE_ID=""
+VOICE_NAME=""
+resolve_voice "$ELEVENLABS_VOICE"
+
+# "Brian" -> "brian"; "Charlotte CL" -> "charlotte-cl"
+VOICE_SLUG="${VOICE_NAME,,}"
+VOICE_SLUG="${VOICE_SLUG// /-}"
+VOICE_SLUG="${VOICE_SLUG//[^a-z0-9_-]/}"
+OUT_FILE="$AUDIO_DIR/$DATE-${VOICE_SLUG:-voice}.mp3"
 
 if [[ -e "$OUT_FILE" && "$FORCE" -eq 0 ]]; then
     printf 'already exists: %s (use --force to regenerate)\n' "$OUT_FILE"
     exit 0
 fi
 
-VOICE_ID="$(resolve_voice "$ELEVENLABS_VOICE")"
 CHARS="$(printf '%s' "$TEXT" | wc -c | tr -d ' ')"
 printf 'Generating %s\n  voice:  %s (%s)\n  model:  %s\n  format: %s\n  text:   %s chars\n' \
-    "$OUT_FILE" "$ELEVENLABS_VOICE" "$VOICE_ID" "$ELEVENLABS_MODEL_ID" \
+    "$OUT_FILE" "$VOICE_NAME" "$VOICE_ID" "$ELEVENLABS_MODEL_ID" \
     "$ELEVENLABS_OUTPUT_FORMAT" "$CHARS"
 
 BODY="$(jq -n \

@@ -30,7 +30,7 @@ See also the [daily reading web page](https://universalis.com/australia.melbourn
 # Full readings, rendered nicely in the terminal
 ./formatted.sh
 
-# Today's readings as audio (audio/YYYY-MM-DD.mp3)
+# Today's readings as audio (audio/YYYY-MM-DD-<voice>.mp3)
 ./tts_daily_reading.sh
 
 # Regenerate today's file, preview the spoken text, list voices
@@ -55,7 +55,8 @@ dropped. Preview exactly what gets spoken with `./tts_daily_reading.sh --print-t
 ```
 
 It prompts for your ElevenLabs API key (hidden input), validates it against
-the API, and writes your config to `~/.config/daily-reading/env` —
+the API, lists the voices on your account by number for you to pick from,
+and writes your config to `~/.config/daily-reading/env` —
 **outside this repo**, so your key can never be pushed to GitHub.
 `.env.example` is the committed template; the real file is ignored by
 `.gitignore`.
@@ -80,7 +81,8 @@ Config is read from the first of: `$DAILY_READING_ENV`, `./.env`,
 | Variable | Default | Notes |
 |---|---|---|
 | `ELEVENLABS_API_KEY` | — | Required, from [API keys](https://elevenlabs.io/app/settings/api-keys) |
-| `ELEVENLABS_VOICE` | `rachel` | Voice ID or name (`--list-voices` to browse) |
+| `ELEVENLABS_VOICE` | `rachel` | Voice ID (what `setup.sh` saves) or name (`--list-voices` to browse) |
+| `ELEVENLABS_VOICE_NAME` | looked up | Display name of the voice; used for the `YYYY-MM-DD-<voice>.mp3` filename |
 | `ELEVENLABS_MODEL_ID` | `eleven_flash_v2_5` | Cheap & good; `eleven_multilingual_v2` for best quality |
 | `ELEVENLABS_OUTPUT_FORMAT` | `mp3_44100_64` | 64 kbps mp3 — small files, fine for speech |
 | `ELEVENLABS_STABILITY` | `0.5` | Higher = steadier, lower = more expressive |
