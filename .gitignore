@@ -3,7 +3,7 @@
 env
 
 # Generated audio
-audio/
+# audio/
 
 # Editor / OS noise
 *~
