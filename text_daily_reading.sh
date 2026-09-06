@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The universalis.com JSONP payload is JavaScript, not plain JSON: some string
+# values carry obfuscation like "...BnD...".split("D").join("d ")... which must be
+# evaluated to produce valid JSON, so use node to unwrap the callback.
 curl -fsSL "https://universalis.com/Australia/$(date +%Y%m%d)/jsonpmass.js" \
-    | sed -E 's/^universalisCallback\((.*)\);[[:space:]]*$/\1/' \
+    | node -e '
+        let s = "";
+        process.stdin.on("data", d => s += d);
+        process.stdin.on("end", () => {
+            const m = s.match(/^universalisCallback\((.*)\);\s*$/s);
+            if (!m) { console.error("unexpected payload from universalis.com"); process.exit(1); }
+            process.stdout.write(JSON.stringify(eval("(" + m[1] + ")")));
+        });
+    ' \
     | jq -r '
         def entities:
             gsub("&#160;|&#xa0;|&nbsp;"; " ")
