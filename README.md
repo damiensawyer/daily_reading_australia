@@ -17,6 +17,7 @@ See also the [daily reading web page](https://universalis.com/australia.melbourn
 | `formatted.sh` | Runs `text_daily_reading.sh` and renders the markdown in the terminal via [glow](https://github.com/charmbracelet/glow) |
 | `tts_daily_reading.sh` | Full readings as a small mp3 in `audio/`, via ElevenLabs |
 | `setup.sh` | One-time setup: prompts for your ElevenLabs API key and writes your (gitignored) config |
+| `fetch_readings_json.sh` | Fetches the Universalis JSONP feed and decodes it to plain JSON; used by the two scripts above |
 
 ## Usage
 
@@ -131,5 +132,12 @@ Enable with `systemctl --user enable --now daily-reading-tts.timer`.
 
 - `curl`
 - `jq`
+- `python3` (decodes the Universalis feed — see below)
 - `glow` (only for `formatted.sh`)
 - GNU `stow` (only for `setup.sh --stow`)
+
+The Universalis feed is JSONP whose string values are compressed with
+JavaScript `.split("x").join("...")` chains, so it is not valid JSON and
+cannot be fed straight to `jq`. `fetch_readings_json.sh` parses those string
+literals and applies the substitutions itself, rather than eval'ing the
+remote JavaScript.

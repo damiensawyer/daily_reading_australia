@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl -fsSL "https://universalis.com/Australia/$(date +%Y%m%d)/jsonpmass.js" \
-    | sed -E 's/^universalisCallback\((.*)\);[[:space:]]*$/\1/' \
+HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+"$HERE/fetch_readings_json.sh" \
     | jq -r '
         def entities:
             gsub("&#160;|&#xa0;|&nbsp;"; " ")
