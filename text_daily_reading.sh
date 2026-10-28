@@ -4,7 +4,9 @@ set -euo pipefail
 # The universalis.com JSONP payload is JavaScript, not plain JSON: some string
 # values carry obfuscation like "...BnD...".split("D").join("d ")... which must be
 # evaluated to produce valid JSON, so use node to unwrap the callback.
-curl -fsSL "https://universalis.com/Australia/$(date +%Y%m%d)/jsonpmass.js" \
+# universalis.com 403s non-browser user agents, so send a browser UA.
+curl -fsSL -A "Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0" \
+    "https://universalis.com/Australia/$(date +%Y%m%d)/jsonpmass.js" \
     | node -e '
         let s = "";
         process.stdin.on("data", d => s += d);
