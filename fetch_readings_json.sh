@@ -12,7 +12,8 @@ set -euo pipefail
 
 DATE="${1:-$(date +%Y%m%d)}"
 
-curl -fsSL "https://universalis.com/Australia/${DATE}/jsonpmass.js" \
+curl -fsSL -A "Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0" \
+    "https://universalis.com/Australia/${DATE}/jsonpmass.js" \
     | python3 -c '
 import json, re, sys
 
