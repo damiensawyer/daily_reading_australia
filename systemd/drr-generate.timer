@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate today's daily reading mp3 every 30 min, 03:00-12:00
+
+[Timer]
+OnCalendar=*-*-* 03..11:00,30:00
+OnCalendar=*-*-* 12:00:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target
