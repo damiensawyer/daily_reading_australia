@@ -18,8 +18,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODEL="${KOKO_MODEL:-$HOME/.local/share/kokoro/kokoro-v1.0.onnx}"
 DATA="${KOKO_DATA:-$HOME/.local/share/kokoro/voices-v1.0.bin}"
-STYLE="${KOKO_STYLE:-bm_george}"
-SPEED="${KOKO_SPEED:-0.85}"
+STYLE="${KOKO_STYLE:-af_nicole}"
+# STYLE="${KOKO_STYLE:-bm_george}"
+# SPEED="${KOKO_SPEED:-0.85}"
+SPEED="${KOKO_SPEED:-1}"
 MP3_DIR="$SCRIPT_DIR/mp3"
 MP3="$MP3_DIR/$(date +%Y%m%d).mp3"
 
@@ -94,11 +96,13 @@ if (( FORCE )) || [[ ! -s "$MP3" ]]; then
     text="$(speech_text)"
     [[ -n "${text//[[:space:]]/}" ]] || { echo "error: no reading text" >&2; exit 1; }
     tmp_wav="$(mktemp /tmp/drr-XXXXXX.wav)"
-    trap 'rm -f "$tmp_wav"' EXIT
+    tmp_mp3="$MP3.partial"
+    trap 'rm -f "$tmp_wav" "$tmp_mp3"' EXIT
     echo "Generating today's readings with $STYLE at speed $SPEED (${#text} chars)…" >&2
     koko --model "$MODEL" --data "$DATA" --lan en --style "$STYLE" --speed "$SPEED" \
          text "$text" -o "$tmp_wav" >/dev/null 2>&1
-    lame --quiet -V 4 "$tmp_wav" "$MP3"
+    lame --quiet -V 4 "$tmp_wav" "$tmp_mp3"
+    mv "$tmp_mp3" "$MP3"
     echo "✓ Saved $MP3" >&2
 fi
 
